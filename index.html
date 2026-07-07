@@ -74,18 +74,22 @@
 <section id="method">
   <p class="kicker">How it works</p>
   <h2>From pixels to a physical verdict, in four steps</h2>
-  <figure class="fig"><img src="assets/figures/fig1_architecture.png" alt="" loading="lazy"><figcaption>The full method: an attention-based reader turns each frame into joint angles and a confidence, then those angles drive the robot&rsquo;s real CAD model, where every physical rule is a geometric measurement.<span class="howto"><b>How to read this.</b> Top half &mdash; reading the pose: a frozen vision model turns the frame into patches, a set of learned attention maps focus on the body parts that matter, and two outputs emerge &mdash; the joint angles and how confident the reader is. Bottom half &mdash; checking the physics: those angles pose the robot&rsquo;s real 3-D model, and every rule (parts overlapping, balance over the feet, joint limits, limb length, smoothness) is read straight off the geometry.</span></figcaption></figure>
-  <div class="mediarow"><figure class="media cell"><video src="assets/videos/aux_saliency.mp4" controls muted loop playsinline preload="metadata"></video><figcaption>Where the reader looks, per finger. The bright patches show which pixels the pose reader attends to when recovering each joint — it fixes on the hands and arms, exactly where the answer is.</figcaption></figure></div>
+  <p class="wide-lede">The reader is not a generic pose network bolted on after the fact &mdash; it is <b>built around the robot's own kinematic model</b>. Every output maps to a specific degree of freedom in the URDF (the left arm, the right arm, the waist), and each one is given <b>its own attention over the image</b>, so the reader looks at the body part that joint actually controls. The physics checks downstream therefore rest on a pose read the way the robot is really built.</p>
+  <figure class="fig"><img src="assets/figures/fig1_architecture.png" alt="" loading="lazy"><figcaption>The full method: an attention-based reader turns each frame into joint angles and a confidence, then those angles drive the robot&rsquo;s real CAD model, where every physical rule is a geometric measurement.<span class="howto"><b>How to read this.</b> Top half &mdash; reading the pose: a frozen vision model turns the frame into patches, then a set of learned attention maps &mdash; <b>one per robot degree of freedom, following the URDF's own left-arm / right-arm / waist layout</b> &mdash; each focus on the body part that joint controls, and two outputs emerge: the joint angles and how confident the reader is. Bottom half &mdash; checking the physics: those angles pose the robot&rsquo;s real 3-D model, and every rule (parts overlapping, balance over the feet, joint limits, limb length, smoothness) is read straight off the geometry.</span></figcaption></figure>
+  <div class="mediarow"><figure class="media cell"><video src="assets/videos/aux_saliency.mp4" controls muted loop playsinline preload="metadata"></video><figcaption>Where the reader looks, per degree of freedom. By design every joint &mdash; each arm joint and finger, in the robot's own URDF layout &mdash; gets its own attention map; the bright patches show which pixels the reader uses to recover that joint. Each locks onto its own hand and arm, exactly where the answer is.</figcaption></figure></div>
   <div class="stages">
     <div class="stage"><span class="snum">1</span><h4>Look at the frame</h4>
       <p>Each frame passes through a <b>frozen, pre-trained vision model</b>. Because it is
       frozen &mdash; never re-trained on our videos &mdash; it cannot secretly memorise what
       real robot footage looks like and quietly help the score cheat.</p></div>
-    <div class="stage"><span class="snum">2</span><h4>Read the joint angles</h4>
-      <p>A small predictor turns those features into the robot's actual joint angles &mdash;
-      the two arms and the waist. Crucially it reports the <b>raw angle even when it is
-      physically impossible</b>, so a bad prediction stays visible instead of being quietly
-      clipped back into the legal range.</p></div>
+    <div class="stage"><span class="snum">2</span><h4>Read the joint angles &mdash; one attention per joint</h4>
+      <p>A small predictor turns those features into the robot's actual joint angles, laid out
+      <b>exactly as in the URDF</b>: the left arm, the right arm, and the waist, one output per
+      degree of freedom. It is <b>structured by the robot's own kinematics</b> &mdash; each joint
+      carries its own attention query over the image (the saliency above), so a joint reads its
+      own limb rather than the whole frame being squeezed through one black-box guess. Crucially
+      it reports the <b>raw angle even when it is physically impossible</b>, so a bad prediction
+      stays visible instead of being quietly clipped back into the legal range.</p></div>
     <div class="stage"><span class="snum">3</span><h4>Say how sure it is</h4>
       <p>For every joint it also outputs a <b>confidence</b>. Frames where the view is blurry
       or blocked come with lower confidence, so they can be set aside rather than trusted
