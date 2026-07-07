@@ -1,6 +1,12 @@
 {
   "figures": [
     {
+      "filename": "fig1_architecture.png",
+      "title": "KineScore \u2014 attentive pose reading, then geometric physics on the URDF",
+      "caption": "The full method in two parts. PART A shows how the pose is read from pixels: a frozen ViT turns one ego frame into a 24x24 grid of patch features x (B,T,576,1024); an attentive pose head scores every patch (Linear 1024->4) and applies a softmax over the patches to form 4 attention maps that empirically specialize (two heads lock onto the two robotic hands, two spread over the workspace/periphery). The head pools the patch features under each map with an einsum, concatenates a global-mean token, projects to 512, and runs a short temporal transformer to two output heads: the raw joint angles q (radians) and a per-joint confidence sigma = sqrt(exp(logvar)). Per-joint gradient saliency confirms the grounding: each joint's angle is read from its own limb (left-arm joints from the left hand, the right shoulder from the right arm, the waist from the torso base). PART B shows how the physics is checked: q is placed on the robot's own CAD model (URDF + forward kinematics), giving the posed GR-1 skeleton with body-core collision spheres and foot support polygon, from which five geometric checks are read straight off the model: self-collision penetration, centre-of-mass balance, URDF joint limits, link rigidity and temporal smoothness (SPARC). Because every score is a geometric measurement on the robot's own model rather than a learned data distribution, real footage can never be ranked below generated footage.",
+      "source": "scripts/gr1/44_render_architecture.py"
+    },
+    {
       "filename": "fig1_pipeline.svg",
       "title": "The feasibility-ruler pipeline",
       "caption": "Video frames pass through a frozen DINOv3-L encoder into Readout-v2, which predicts joint angles (mean in raw radians) together with a calibrated per-joint uncertainty sigma over a temporal window. Forward kinematics on the robot URDF turns those angles into 3-D poses, from which three signals are read out: physical feasibility, temporal smoothness (jerk), and a sigma confidence gate. Every metric is evaluated under a paired protocol, phi(pred) minus phi(gt) on the same episode, so effects are measured against the model's own ground-truth rollout.",
