@@ -166,7 +166,18 @@ p { margin: 0 0 16px; }
   letter-spacing: 0.2px; color: var(--muted);
   margin: 30px 0 14px; padding-bottom: 7px; border-bottom: 2px solid var(--line);
 }
-.mgrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.mgrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; align-items: start; }
+/* a lone trailing card in a 2-col group spans the full width and lays its wide
+   figure beside its text, so it fills the row evenly instead of leaving a gap */
+.mgrid > .mcard:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  column-gap: 30px; row-gap: 0; align-items: start;
+}
+.mgrid > .mcard:last-child:nth-child(odd) .mcard-head { grid-column: 1 / -1; }
+.mgrid > .mcard:last-child:nth-child(odd) .mcard-img { grid-column: 1; grid-row: 2 / span 99; margin: 14px 0 0; align-self: center; }
+.mgrid > .mcard:last-child:nth-child(odd) .m-real { grid-column: 2; margin-top: 14px; }
+.mgrid > .mcard:last-child:nth-child(odd) .m-line { grid-column: 2; max-width: none; }
 .mcard {
   border: 1px solid var(--line); border-radius: 14px; background: #fff;
   padding: 18px 20px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);
@@ -261,11 +272,13 @@ p { margin: 0 0 16px; }
 
 /* ---------- multi-clip rows ---------- */
 .mediarow {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 16px; margin: 22px 0 6px;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px; margin: 22px 0 6px; align-items: start;
 }
 .mediarow .media { margin: 0; max-width: none; }
 .mediarow .media figcaption { font-size: 13px; }
+/* a lone trailing clip centers at a readable width instead of hugging the left */
+.mediarow > .media:last-child:nth-child(odd) { grid-column: 1 / -1; max-width: 62%; margin-inline: auto; }
 
 /* full-width static figures (architecture) sit edge-to-edge in the column */
 .fig.full, section > .fig { max-width: var(--wide); }
@@ -288,7 +301,12 @@ footer { text-align: center; padding: 40px 26px 66px; color: var(--muted); font-
   body { font-size: 17px; }
   .hero h1 { font-size: 44px; }
   .tagline { font-size: 20px; }
-  .rqs, .stages, .mgrid { grid-template-columns: 1fr; }
+  .rqs, .stages, .mgrid, .mediarow { grid-template-columns: 1fr; }
+  .mgrid > .mcard:last-child:nth-child(odd) { grid-template-columns: 1fr; }
+  .mgrid > .mcard:last-child:nth-child(odd) .mcard-img,
+  .mgrid > .mcard:last-child:nth-child(odd) .m-real,
+  .mgrid > .mcard:last-child:nth-child(odd) .m-line { grid-column: 1; }
+  .mediarow > .media:last-child:nth-child(odd) { max-width: none; }
   h2 { font-size: 25px; }
   .wrap, .nav-in { padding-left: 18px; padding-right: 18px; }
   .exp { padding: 22px 20px; }
