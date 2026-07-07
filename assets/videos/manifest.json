@@ -1,0 +1,65 @@
+[
+ {
+  "filename": "aux_saliency.mp4",
+  "kind": "aux",
+  "caption": "Per-DOF saliency of the v1 pixel encoder (auxiliary diagnostic).",
+  "bytes": 193795,
+  "wxh": "720x338"
+ },
+ {
+  "filename": "aux_saliency.png",
+  "kind": "aux",
+  "caption": "DOF-saliency still for GR-1 episode 4 (v1 encoder diagnostic).",
+  "bytes": 1456934,
+  "wxh": "2530x1092"
+ },
+ {
+  "filename": "d1_real_ep000000.mp4",
+  "kind": "d1",
+  "caption": "Real GR-1 ego-view with GT (blue) vs readout-v2 predicted (orange) bimanual skeleton \u2014 episode_000000 (mean err 9 mm).",
+  "bytes": 80764,
+  "wxh": "720x328"
+ },
+ {
+  "filename": "d1_real_ep000003.mp4",
+  "kind": "d1",
+  "caption": "Real GR-1 ego-view with GT (blue) vs readout-v2 predicted (orange) bimanual skeleton \u2014 episode_000003 (mean err 13 mm).",
+  "bytes": 104826,
+  "wxh": "720x328"
+ },
+ {
+  "filename": "d1_real_ep000004.mp4",
+  "kind": "d1",
+  "caption": "Real GR-1 ego-view with GT (blue) vs readout-v2 predicted (orange) bimanual skeleton \u2014 episode_000004 (mean err 7 mm).",
+  "bytes": 141613,
+  "wxh": "720x328"
+ },
+ {
+  "filename": "d2_dreamdojo_1.mp4",
+  "kind": "d2",
+  "caption": "DreamDojo dense episode_0042: GT vs world-model prediction with the per-frame arm-keypoint jerk curve (\u0394jerk=19.7 m/s\u00b3).",
+  "bytes": 331511,
+  "wxh": "720x496"
+ },
+ {
+  "filename": "d2_dreamdojo_2.mp4",
+  "kind": "d2",
+  "caption": "DreamDojo dicache episode_0033: GT vs world-model prediction with the per-frame arm-keypoint jerk curve (\u0394jerk=19.1 m/s\u00b3).",
+  "bytes": 99923,
+  "wxh": "720x496"
+ },
+ {
+  "filename": "d3_generated_1.mp4",
+  "kind": "d3",
+  "caption": "Readout-v2 3-D pose reconstructed from a DreamDojo generated rollout (fastercache episode_0000).",
+  "bytes": 110271,
+  "wxh": "720x328"
+ },
+ {
+  "filename": "d3_generated_2.mp4",
+  "kind": "d3",
+  "caption": "Readout-v2 3-D pose reconstructed from a DreamDojo generated rollout (dicache episode_0001).",
+  "bytes": 75528,
+  "wxh": "720x328"
+ }
+]

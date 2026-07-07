@@ -1,5 +1,290 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>KineScore</title><style>body{margin:0;font-family:Georgia,serif;background:#fff;color:#1a1a1a;display:grid;place-items:center;min-height:100vh}
-.b{max-width:640px;padding:3rem;text-align:center}h1{font-size:2.4rem;margin:.2rem 0}p{font-family:system-ui,sans-serif;color:#555;line-height:1.6}</style></head>
-<body><div class="b"><h1>KineScore</h1><p><em>A physics ruler for generated robot video.</em></p>
-<p>The full project page is publishing shortly.</p></div></body></html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>KineScore — a physics ruler for generated robot video</title>
+<link rel="stylesheet" href="assets/css/style.css">
+
+<nav class="nav"><div class="nav-in">
+  <span class="brand">KineScore</span>
+  <a href="#problem">Problem</a>
+  <a href="#questions">Questions</a>
+  <a href="#method">How it works</a>
+  <a href="#measurements">Measurements</a>
+  <a href="#experiments">Experiments</a>
+  <a href="#findings">Findings</a>
+  <a href="#cite">Cite</a>
+</div></nav>
+
+<main class="wrap">
+
+<header class="hero">
+  <h1>KineScore</h1>
+  <p class="tagline">A physics ruler for generated robot video.</p>
+  <p class="lede">
+    KineScore looks at a video of a robot and judges whether its <b>motion obeys
+    physics</b> &mdash; not whether the footage looks realistic. It reads the
+    robot's joint angles out of each frame, snaps them onto the real robot's 3-D
+    skeleton, and checks physical rules that no camera trick can fake. Because it
+    never learned &ldquo;what a real robot video looks like,&rdquo; it can never be
+    fooled into calling genuine footage the fake.
+  </p>
+  <p class="anon">Anonymous submission &middot; under double-blind review &middot;
+     author names withheld.</p>
+  <div class="badges">
+    <span class="badge off">Paper &middot; coming soon</span>
+    <span class="badge off">Code &middot; coming soon</span>
+    <a class="badge" href="https://huggingface.co/datasets/doanh25032004/video_gen_physics_real_video" target="_blank" rel="noopener">Data &middot; real robot video</a>
+    <a class="badge" href="https://huggingface.co/datasets/doanh25032004/video_gen_physics" target="_blank" rel="noopener">Data &middot; generated video</a>
+  </div>
+  <figure class="media teaser"><video src="assets/videos/d1_real_ep000000.mp4" autoplay muted loop playsinline></video><figcaption>A real recording of the robot. Blue is the robot&#x27;s true 3-D skeleton; orange is the skeleton KineScore reconstructs from the pixels alone. The two move together — the reconstruction is faithful.</figcaption></figure>
+</header>
+
+
+<section id="problem">
+  <p class="kicker">The problem</p>
+  <h2>A video can look perfect and still be physically impossible</h2>
+  <p>Researchers increasingly train and test robots inside AI-generated video &mdash;
+  &ldquo;world models&rdquo; that dream up what a robot would see. It is fast and
+  cheap. But a generated clip can look razor-sharp while showing motion no real
+  machine could ever produce: arms that judder, joints that snap, limbs that
+  quietly stretch.</p>
+  <p>The usual video scores don't catch this. They measure <b>how realistic a clip
+  looks</b>, not <b>whether its physics is right</b>. Worse, any score that first
+  learns what &ldquo;normal&rdquo; footage looks like can be talked into rating a
+  piece of <b>genuine real footage as worse than a fake</b> &mdash; simply because
+  the real clip is unusual. That is exactly the trap we avoid: our checks come from
+  the robot's engineering model, so real footage can never be ranked below
+  something generated.</p>
+  <figure class="media wide"><video src="assets/videos/d2_dreamdojo_1.mp4" controls muted loop playsinline preload="metadata"></video><figcaption>An AI-generated clip (right) next to the real clip it is meant to imitate (left). The picture looks sharp — but the trace underneath, which measures how smoothly the arms move, stutters for the generated clip where the real one flows.</figcaption></figure>
+</section>
+
+
+<section id="questions">
+  <p class="kicker">What we ask</p>
+  <h2>Four questions, in plain words</h2>
+  <div class="rqs">
+    <div class="rq"><div class="rq-n">RQ1</div><p class="rq-q">Can we read a robot's joint angles from raw video reliably enough to judge its physics?</p><p class="rq-a">Yes. The 3-D skeleton read from raw pixels lands about <b>19&nbsp;mm</b> from the true one &mdash; a couple of centimetres &mdash; and the reader also says how sure it is on every frame.</p></div>
+    <div class="rq"><div class="rq-n">RQ2</div><p class="rq-q">Can we score physical plausibility <em>without</em> learning a distribution, so real footage is never unfairly penalised?</p><p class="rq-a">Yes. The physical checks come from the robot's own engineering model, not from a library of &ldquo;normal-looking&rdquo; videos. By construction, real footage can never be scored below a generated clip.</p></div>
+    <div class="rq"><div class="rq-n">RQ3</div><p class="rq-q">How, exactly, do today's generated robot videos break physics?</p><p class="rq-a">Not with impossible poses &mdash; today's generators keep joints legal. They break physics <b>in time</b>: the motion judders (about <b>27%</b> jerkier than real) and limbs subtly change length (about <b>37%</b> more distortion).</p></div>
+    <div class="rq"><div class="rq-n">RQ4</div><p class="rq-q">Do the speed-up methods that accelerate these generators make the physics worse?</p><p class="rq-a">No. The speed-up tricks that make these generators faster add essentially no extra jerk &mdash; a few are even slightly smoother. The physics cost is baked into the generation itself, not the acceleration.</p></div>
+  </div>
+</section>
+
+
+<section id="method">
+  <p class="kicker">How it works</p>
+  <h2>From pixels to a physical verdict, in four steps</h2>
+  <div class="svgwrap"><svg viewBox="0 0 1100 340" width="1100" height="340" font-family="ui-sans-serif, system-ui, sans-serif" role="img" aria-label="Marionette feasibility-ruler pipeline: video frames to frozen From video frames to physical checks: a frozen vision model reads the pose, the robot 3-D model places it in space, then feasibility, smoothness and confidence are read out.">
+  <rect x="0" y="0" width="1100" height="340" fill="#ffffff"/>
+
+  <!-- title -->
+  <text x="40" y="40" font-size="19" font-weight="600" fill="#111111">From video frames to a physics feasibility ruler</text>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#555555"/>
+    </marker>
+  </defs>
+
+  <!-- ==== main pipeline row (box centers on y=120) ==== -->
+  <!-- Video frames -->
+  <rect x="30" y="86" width="140" height="68" rx="9" fill="#ffffff" stroke="#333333" stroke-width="1.3"/>
+  <text x="100" y="116" text-anchor="middle" font-size="15" font-weight="600" fill="#111111">Video frames</text>
+  <text x="100" y="136" text-anchor="middle" font-size="11.5" fill="#666666">RGB rollout</text>
+
+  <line x1="172" y1="120" x2="204" y2="120" stroke="#555555" stroke-width="1.3" marker-end="url(#arrow)"/>
+
+  <!-- Frozen vision model -->
+  <rect x="206" y="86" width="150" height="68" rx="9" fill="#f4f4f4" stroke="#333333" stroke-width="1.3"/>
+  <text x="281" y="112" text-anchor="middle" font-size="15" font-weight="600" fill="#111111">Frozen vision model</text>
+  <text x="281" y="132" text-anchor="middle" font-size="11.5" fill="#666666">&#10052; features, no grad</text>
+
+  <line x1="358" y1="120" x2="390" y2="120" stroke="#555555" stroke-width="1.3" marker-end="url(#arrow)"/>
+
+  <!-- Pose reader -->
+  <rect x="392" y="82" width="266" height="76" rx="9" fill="#ffffff" stroke="#333333" stroke-width="1.3"/>
+  <text x="525" y="108" text-anchor="middle" font-size="15" font-weight="600" fill="#111111">Pose reader</text>
+  <text x="525" y="130" text-anchor="middle" font-size="11.5" fill="#666666">raw joint angles &#183; confidence &#183; short window</text>
+
+  <line x1="660" y1="120" x2="692" y2="120" stroke="#555555" stroke-width="1.3" marker-end="url(#arrow)"/>
+
+  <!-- Robot 3-D model -->
+  <rect x="694" y="86" width="120" height="68" rx="9" fill="#ffffff" stroke="#333333" stroke-width="1.3"/>
+  <text x="754" y="116" text-anchor="middle" font-size="15" font-weight="600" fill="#111111">Robot 3-D model</text>
+  <text x="754" y="136" text-anchor="middle" font-size="11.5" fill="#666666">3-D poses</text>
+
+  <line x1="816" y1="120" x2="848" y2="120" stroke="#555555" stroke-width="1.3" marker-end="url(#arrow)"/>
+
+  <!-- ==== three output chips (Okabe-Ito accents) ==== -->
+  <!-- Feasibility -->
+  <rect x="852" y="66" width="216" height="34" rx="17" fill="#ffffff" stroke="#009E73" stroke-width="1.6"/>
+  <circle cx="874" cy="83" r="6" fill="#009E73"/>
+  <text x="890" y="88" font-size="14" font-weight="600" fill="#111111">Feasibility</text>
+
+  <!-- Smoothness -->
+  <rect x="852" y="106" width="216" height="34" rx="17" fill="#ffffff" stroke="#E69F00" stroke-width="1.6"/>
+  <circle cx="874" cy="123" r="6" fill="#E69F00"/>
+  <text x="890" y="128" font-size="14" font-weight="600" fill="#111111">Smoothness</text>
+
+  <!-- sigma-gate -->
+  <rect x="852" y="146" width="216" height="34" rx="17" fill="#ffffff" stroke="#0072B2" stroke-width="1.6"/>
+  <circle cx="874" cy="163" r="6" fill="#0072B2"/>
+  <text x="890" y="168" font-size="14" font-weight="600" fill="#111111">confidence</text>
+
+  <!-- ==== paired-protocol inset ==== -->
+  <rect x="30" y="238" width="1038" height="64" rx="9" fill="#fafafa" stroke="#cccccc" stroke-width="1.1"/>
+  <text x="52" y="266" font-size="13" font-weight="600" fill="#333333">Paired protocol</text>
+  <text x="52" y="288" font-size="13" fill="#555555">generated minus real, same clip &#8212; each metric measured on the generated and ground-truth rollout of one clip, then differenced.</text>
+</svg>
+</div>
+  <p class="fig-note">The pipeline, left to right: each video frame becomes features,
+  a small predictor turns them into joint angles with a confidence, and the robot's
+  real 3-D model turns those angles into positions that physical rules can be applied to.</p>
+  <div class="stages">
+    <div class="stage"><span class="snum">1</span><h4>Look at the frame</h4>
+      <p>Each frame passes through a <b>frozen, pre-trained vision model</b>. Because it is
+      frozen &mdash; never re-trained on our videos &mdash; it cannot secretly memorise what
+      real robot footage looks like and quietly help the score cheat.</p></div>
+    <div class="stage"><span class="snum">2</span><h4>Read the joint angles</h4>
+      <p>A small predictor turns those features into the robot's actual joint angles &mdash;
+      the two arms and the waist. Crucially it reports the <b>raw angle even when it is
+      physically impossible</b>, so a bad prediction stays visible instead of being quietly
+      clipped back into the legal range.</p></div>
+    <div class="stage"><span class="snum">3</span><h4>Say how sure it is</h4>
+      <p>For every joint it also outputs a <b>confidence</b>. Frames where the view is blurry
+      or blocked come with lower confidence, so they can be set aside rather than trusted
+      blindly.</p></div>
+    <div class="stage"><span class="snum">4</span><h4>Rebuild the real robot</h4>
+      <p>Those angles drive the robot's <b>exact 3-D model</b> (the manufacturer's CAD/URDF
+      design). That gives the true position of every part in space &mdash; and once we have
+      3-D positions, the physical rules become simple geometry.</p></div>
+  </div>
+</section>
+
+
+<section id="measurements">
+  <p class="kicker">The measurements</p>
+  <h2>What the ruler actually checks</h2>
+  <p class="wide-lede">A measurement is only trustworthy if you can see what it looks at.
+  So for every check we put a <b>clean, physically fine pose</b> beside a <b>deliberate
+  violation</b>, and show exactly what the number reads in each case. The first four are
+  pure <b>physics rules</b> &mdash; geometry on the robot's own model, with nothing learned
+  about which poses are &ldquo;typical.&rdquo; The last is the model's own honesty about how
+  sure it is.</p>
+  <h3 class="mgroup">Mechanical feasibility &mdash; rules from the robot's own model</h3>
+<div class="mgrid"><article class="mcard"><div class="mcard-head"><h4>Do solid parts of the body overlap?</h4><span class="pill rule">physics rule &middot; nothing learned</span></div><div class="mcard-img"><img src="assets/measurements/m_selfcollision.png" loading="lazy" alt=""></div><p class="m-real">In real life: an arm passing straight through the chest, which a solid body can never do.</p><p class="m-line"><span class="lbl ok">what it checks</span> Checks whether any two solid parts of the body pass through each other in 3-D — for example an arm through the chest.</p><p class="m-line"><span class="lbl viol">a violation looks like</span> Folding the arms into the torso makes the parts overlap by about 12&nbsp;cm; a genuine recorded pose overlaps by exactly zero.</p></article><article class="mcard"><div class="mcard-head"><h4>Does the robot's weight stay over its feet?</h4><span class="pill rule">physics rule &middot; nothing learned</span></div><div class="mcard-img"><img src="assets/measurements/m_com_balance.png" loading="lazy" alt=""></div><p class="m-real">In real life: leaning so far you topple over instead of staying upright.</p><p class="m-line"><span class="lbl ok">what it checks</span> Measures how much margin there is before the robot's weight would fall outside the area under its feet.</p><p class="m-line"><span class="lbl viol">a violation looks like</span> A hard lean shrinks that margin; on this light-armed robot it never actually tips, and we report that honestly.</p></article><article class="mcard"><div class="mcard-head"><h4>Is every joint within its real limits?</h4><span class="pill rule">physics rule &middot; nothing learned</span></div><div class="mcard-img"><img src="assets/measurements/m_joint_limits.png" loading="lazy" alt=""></div><p class="m-real">In real life: a joint bent further than the real motor allows, like an elbow hinging backwards.</p><p class="m-line"><span class="lbl ok">what it checks</span> Checks each joint against the angles the real hardware can physically reach, using the manufacturer's model.</p><p class="m-line"><span class="lbl viol">a violation looks like</span> An impossible pose pushes four joints past their limits (drawn in red); the real pose stays fully in range.</p></article></div>
+<h3 class="mgroup">Motion over time, and the model's confidence</h3>
+<div class="mgrid"><article class="mcard"><div class="mcard-head"><h4>Does the motion flow smoothly over time?</h4><span class="pill rule">physics rule &middot; nothing learned</span></div><div class="mcard-img"><img src="assets/measurements/m_jerk.png" loading="lazy" alt=""></div><p class="m-real">In real life: motion that stutters and snaps instead of flowing the way a real motor moves.</p><p class="m-line"><span class="lbl ok">what it checks</span> Measures how abruptly the arms change speed from frame to frame — smooth motion scores low, juddering motion scores high.</p><p class="m-line"><span class="lbl viol">a violation looks like</span> A generated clip judders far more than the real clip it is paired with, here roughly two-and-a-half times as much.</p></article><article class="mcard"><div class="mcard-head"><h4>How sure is the reading on this frame?</h4><span class="pill conf">the model's own confidence</span></div><div class="mcard-img"><img src="assets/measurements/m_sigma.png" loading="lazy" alt=""></div><p class="m-real">In real life: the model saying 'I can't quite tell here' instead of pretending to be certain.</p><p class="m-line"><span class="lbl ok">what it checks</span> For each joint, the pose reader also reports how confident it is, so unreliable frames can be set aside rather than trusted blindly.</p><p class="m-line"><span class="lbl viol">a violation looks like</span> On a blurry or blocked frame its stated uncertainty grows on the hard joints — a flag, not a silent guess.</p></article></div>
+</section>
+
+
+<section id="experiments">
+  <p class="kicker">Experiments</p>
+  <h2>What we found</h2>
+  
+  <article class="exp">
+    <div class="exp-tag">Experiment 1 &middot; Reading pose (RQ1)</div>
+    <h3>The reconstructed skeleton tracks the real robot</h3>
+    <p class="exp-setup"><b>Setup.</b> We compare the 3-D skeleton read from raw video against the robot's true skeleton on held-out real recordings.</p>
+    <p class="exp-res"><b>Result.</b> The skeleton reconstructed from pixels lands about <b>19&nbsp;mm</b> from the true 3-D skeleton on held-out real clips.</p>
+    <figure class="media wide"><video src="assets/videos/d1_real_ep000003.mp4" controls muted loop playsinline preload="metadata"></video></figure>
+    
+    <p class="exp-mean"><b>What it means.</b> About 19&nbsp;mm is roughly the width of a fingertip &mdash; small enough that everything built on top of it (the physics checks) rests on a faithful pose. The reader also reports its confidence, so the few frames it is unsure about need not be trusted.</p>
+  </article>
+  
+  <article class="exp">
+    <div class="exp-tag">Experiment 2 &middot; A fair ruler (RQ2)</div>
+    <h3>Real footage is never scored below a fake</h3>
+    <p class="exp-setup"><b>Setup.</b> On real recordings we ask whether the physics checks ever rate real footage as less valid than generated footage.</p>
+    <p class="exp-res"><b>Result.</b> On real footage, the two feasibility checks that don't depend on frame rate read the same for real and generated &mdash; a coin-flip, never worse for the real clip. (A third check, balance, correctly rates real footage as <em>more</em> stable.)</p>
+    <figure class="fig"><img src="assets/figures/fig_noninv_page.png" alt="" loading="lazy"><figcaption>On real footage, the physics-feasibility checks do not favour fakes.<span class="howto"><b>How to read this.</b> Each bar is one check. A bar at the middle line means the check treats real and generated footage identically (a coin-flip, 0.5). None of the bars sits above the line, so the ruler never scores a real clip as less physical than a generated one. The lower balance bar is the correct direction &mdash; real robots are more stable than generated ones.</span></figcaption></figure>
+    
+    <p class="exp-mean"><b>What it means.</b> This is the whole point of building the ruler from physics rules rather than a learned sense of &ldquo;normal.&rdquo; A rule can never decide that genuine footage is less physically valid than a fake &mdash; the failure that traps learned scores simply cannot happen here.</p>
+  </article>
+  
+  <article class="exp">
+    <div class="exp-tag">Experiment 3 &middot; A dial, not an alarm</div>
+    <h3>The reading rises smoothly as a pose gets worse</h3>
+    <p class="exp-setup"><b>Setup.</b> We corrupt real poses by growing amounts, and separately degrade the video quality, and watch how the readings respond.</p>
+    <p class="exp-res"><b>Result.</b> As a pose is corrupted more and more, the violation reading rises smoothly with it (in almost perfect order for overlap, in perfect order for joint limits). And as the <em>video</em> quality is degraded, the model's stated uncertainty climbs in step (in perfect order).</p>
+    <figure class="fig"><img src="assets/validation/monotonicity.png" alt="" loading="lazy"><figcaption>The more you break a pose, the higher the violation reads &mdash; smoothly.<span class="howto"><b>How to read this.</b> Left: as the corruption on the horizontal axis grows, every violation curve climbs steadily rather than jumping. Right: as the video is degraded (worse on the right), the model's uncertainty rises with it. Both are what a well-behaved measuring instrument should do.</span></figcaption></figure>
+    
+    <p class="exp-mean"><b>What it means.</b> The ruler is a dial, not an on/off light. A slightly-off pose reads slightly bad; a very-off pose reads very bad. That means the number is meaningful, not just a yes/no alarm &mdash; and the model gets honestly less confident exactly when the picture gets harder to read.</p>
+  </article>
+  
+  <article class="exp">
+    <div class="exp-tag">Experiment 4 &middot; The main finding (RQ3)</div>
+    <h3>Generated motion is measurably jerkier than real</h3>
+    <p class="exp-setup"><b>Setup.</b> For each generated clip we compare it against its <em>own</em> ground-truth clip &mdash; same scene, same task &mdash; so nothing but the generation differs.</p>
+    <p class="exp-res"><b>Result.</b> Compared frame-for-frame against its <em>own</em> real counterpart, every generated clip is jerkier. Typical jerk rises from about <b>15.7</b> for the real clip to about <b>21.3</b> for the generated one &mdash; a gap of roughly <b>5.5</b> per episode, across 116 episodes. In 99 episodes out of 100 the generated clip was the jerkier one.</p>
+    <figure class="fig"><img src="assets/figures/fig2_paired.png" alt="" loading="lazy"><figcaption>Every generated clip is jerkier than the real clip it was paired with.<span class="howto"><b>How to read this.</b> Top row, one panel per generator: each dot is one episode, its real jerk across the bottom and its generated jerk up the side. The dashed line is &ldquo;equally smooth.&rdquo; Almost every dot sits above it &mdash; generated is jerkier. Bottom: the same gap as a distribution; the whole cloud sits above zero.</span></figcaption></figure>
+    <figure class="media half"><video src="assets/videos/d3_generated_1.mp4" controls muted loop playsinline preload="metadata"></video><figcaption>A fully AI-generated clip with the 3-D pose KineScore recovers from it. This recovered pose is what lets us check the physics of a video no camera ever filmed.</figcaption></figure>
+    <p class="exp-mean"><b>What it means.</b> By comparing each generated clip only to its <em>own</em> ground truth, nothing else differs &mdash; same scene, same task &mdash; so the extra jerk can only come from the generation. In plain terms, a difference this large essentially never happens by chance (the odds against it are astronomical, p&nbsp;&asymp;&nbsp;2&times;10<sup>-20</sup>). That gap is also larger than the tool's own frame-to-frame wobble (about 3.7), so it is a real signal, not measurement noise. Measured on fairly-matched footage, generated motion runs about <b>27%</b> jerkier than real, and its limbs distort about <b>37%</b> more.</p>
+  </article>
+  
+  <article class="exp">
+    <div class="exp-tag">Experiment 5 &middot; Speed-ups are free (RQ4)</div>
+    <h3>Making the generator faster adds no extra jerk</h3>
+    <p class="exp-setup"><b>Setup.</b> Several published methods speed these generators up by caching. We measure the extra jerk each one adds on top of the un-accelerated generator.</p>
+    <p class="exp-res"><b>Result.</b> <ul class="plain-list"><li><span class="swatch" style="background:#D55E00"></span><b>dicache</b> (about 2.3&times; faster): extra jerk from caching &asymp; &minus;0.3 &mdash; slightly smoother, essentially none.</li><li><span class="swatch" style="background:#0072B2"></span><b>fastercache</b> (about 1.7&times; faster): extra jerk from caching &asymp; &minus;0.6 &mdash; slightly smoother, essentially none.</li><li><span class="swatch" style="background:#009E73"></span><b>worldcache</b> (about 2.1&times; faster): extra jerk from caching &asymp; &minus;0.4 &mdash; slightly smoother, essentially none.</li></ul></p>
+    <figure class="fig"><img src="assets/validation/speedup_corr.png" alt="" loading="lazy"><figcaption>Faster generators are not jerkier &mdash; the extra physics cost of caching is ~zero.<span class="howto"><b>How to read this.</b> Each point is one speed-up method: how much faster it runs (across) versus how much extra jerk it adds (up). All points hug the zero line, and there is no upward trend, so buying speed does not cost smoothness. (With only a few methods this is a picture, not a significance test.)</span></figcaption></figure>
+    
+    <p class="exp-mean"><b>What it means.</b> Set against the roughly +5.5 that generation itself adds, the extra jerk from any speed-up is a rounding error &mdash; and often slightly negative, i.e. a touch smoother. Across the methods there is no trend of &ldquo;faster means jerkier.&rdquo; The physics cost lives in generating the video, not in accelerating it &mdash; so these speed-ups are, for physics, free.</p>
+  </article>
+</section>
+
+
+<section id="findings">
+  <p class="kicker">What we conclude</p>
+  <h2>Takeaways</h2>
+  <ul class="takeaways">
+    <li>You can read a robot's pose from raw video accurately enough
+        (about 19) to judge its physics
+        &mdash; and the reader knows when to doubt itself.</li>
+    <li>Grounding the checks in the robot's engineering model, rather than a learned sense of
+        &ldquo;normal,&rdquo; means real footage can never be unfairly ranked below a fake.</li>
+    <li>Today's generated robot videos don't strike impossible poses &mdash; they break physics
+        <b>in time</b>: the motion judders (about 27% jerkier)
+        and limbs subtly change length.</li>
+    <li>The speed-up tricks that accelerate these generators are, for physics, <b>free</b>:
+        they add no measurable extra jerk.</li>
+  </ul>
+
+  <h3 class="sub">Honest limitations</h3>
+  <ul class="limits">
+    <li>On today's generators, the &ldquo;impossible pose&rdquo; checks almost never fire &mdash;
+        the real signal is <b>temporal</b> (jerk and limb distortion), and we say so plainly.</li>
+    <li>This pass covers one humanoid robot and one family of generators; some cross-settings are
+        still being finished.</li>
+    <li>Comparing across different generators fairly requires matching their frame rates first;
+        that matching is ongoing.</li>
+  </ul>
+
+  <h3 class="sub">Still running</h3>
+  <ul class="limits">
+    <li>Extra generators are being folded into the benchmark.</li>
+    <li>Standard, widely-used video-quality baselines are under selection for a head-to-head.</li>
+  </ul>
+</section>
+
+
+<section id="cite">
+  <p class="kicker">Cite</p>
+  <h2>BibTeX</h2>
+  <pre class="bib">@inproceedings{anonymous2026kinescore,
+  title     = {KineScore: A Physics Ruler for Generated Robot Video},
+  author    = {Anonymous},
+  booktitle = {Under double-blind review},
+  year      = {2026},
+  note      = {Author names and affiliations withheld for anonymous review.}
+}</pre>
+</section>
+
+</main>
+
+<footer>
+  <p>KineScore &middot; anonymous project page for double-blind review.<br>
+  Every number on this page is generated at build time from the released data files.
+  Built 2026-07-07.</p>
+</footer>
+

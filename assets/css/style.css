@@ -1,0 +1,251 @@
+/* KineScore — clean, white, distill / NeurIPS-project-page aesthetic.
+   Self-contained: no external fonts, no CDNs, no @imports. */
+
+:root {
+  --serif: Georgia, 'Times New Roman', Times, serif;
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --ink: #1c1c1c;
+  --soft-ink: #33373b;
+  --muted: #6a7075;
+  --line: #e7e7e4;
+  --bg: #ffffff;
+  --panel: #fbfbfa;
+
+  /* Okabe-Ito accents */
+  --gt: #56B4E9;
+  --pred: #E69F00;
+  --worldcache: #009E73;
+  --dicache: #D55E00;
+  --fastercache: #0072B2;
+  --accent: #0072B2;
+
+  --col: 72ch;
+  --wide: 1080px;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 18px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+:focus-visible { outline: 3px solid var(--gt); outline-offset: 2px; border-radius: 3px; }
+
+/* ---------- sticky nav ---------- */
+.nav {
+  position: sticky; top: 0; z-index: 40;
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: saturate(160%) blur(9px);
+  border-bottom: 1px solid var(--line);
+}
+.nav-in {
+  max-width: var(--wide); margin: 0 auto; padding: 11px 26px;
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+}
+.brand { font-family: var(--serif); font-weight: 700; font-size: 19px; margin-right: auto; }
+.nav a { color: var(--muted); font-size: 14.5px; font-weight: 500; }
+.nav a:hover { color: var(--ink); text-decoration: none; }
+
+/* ---------- layout ---------- */
+.wrap { max-width: var(--wide); margin: 0 auto; padding: 0 26px; }
+section { padding: 54px 0; border-bottom: 1px solid var(--line); }
+section:last-of-type { border-bottom: none; }
+
+/* text sits in a comfortable ~72ch column; wide media can break out */
+section > p, section > ul, .rq-a, .exp-setup, .exp-res, .exp-mean,
+.fig-note, .wide-lede, .m-line, .m-real {
+  max-width: var(--col);
+}
+
+h1, h2, h3, h4 { font-family: var(--serif); color: var(--ink); font-weight: 700; }
+h2 { font-size: 30px; letter-spacing: -0.3px; margin: 0 0 14px; line-height: 1.2; }
+h3 { font-size: 22px; margin: 0 0 8px; }
+h3.sub { margin-top: 34px; }
+h4 { font-size: 18px; margin: 0 0 5px; }
+p { margin: 0 0 16px; }
+.muted { color: var(--muted); }
+
+.kicker {
+  text-transform: uppercase; letter-spacing: 1.6px; font-size: 12.5px;
+  font-weight: 700; color: var(--accent); font-family: var(--sans);
+  margin: 0 0 10px;
+}
+
+/* ---------- hero ---------- */
+.hero { text-align: center; padding: 70px 0 46px; border-bottom: 1px solid var(--line); }
+.hero h1 { font-size: 62px; line-height: 1; letter-spacing: -1.5px; margin: 0 0 12px; }
+.tagline { font-size: 23px; color: var(--soft-ink); font-style: italic;
+           font-family: var(--serif); margin: 0 0 22px; }
+.lede {
+  font-size: 19px; color: var(--soft-ink); max-width: 68ch;
+  margin: 0 auto 22px; text-align: left; line-height: 1.65;
+}
+.anon { font-size: 14px; color: var(--muted); margin: 0 0 24px; }
+
+.badges { display: flex; gap: 11px; justify-content: center; flex-wrap: wrap; margin: 0 0 30px; }
+.badge {
+  display: inline-flex; align-items: center; padding: 9px 18px;
+  border: 1px solid var(--line); border-radius: 999px;
+  font-size: 14px; font-weight: 600; color: var(--ink); background: var(--panel);
+}
+.badge:hover { text-decoration: none; border-color: #c9c9c6; }
+.badge.off { color: var(--muted); background: #f4f4f2; cursor: default; }
+
+/* ---------- media (video) ---------- */
+.media {
+  margin: 22px auto 0; max-width: var(--wide);
+  border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--panel);
+}
+.media video { width: 100%; display: block; background: #000; }
+.media figcaption { padding: 12px 18px; font-size: 14px; color: var(--muted); text-align: left; }
+.media.teaser { max-width: 860px; }
+.media.wide { max-width: 820px; }
+.media.half { max-width: 560px; }
+.ph {
+  display: flex; align-items: center; justify-content: center; min-height: 220px;
+  color: var(--muted); font-size: 14px;
+  background: repeating-linear-gradient(45deg,#fafafa,#fafafa 12px,#f3f3f1 12px,#f3f3f1 24px);
+}
+
+/* ---------- in-progress note ---------- */
+.inprogress {
+  display: flex; align-items: center; gap: 10px;
+  border: 1px dashed #d6d6d2; border-radius: 12px; background: var(--panel);
+  padding: 16px 20px; color: var(--muted); font-size: 14.5px; margin: 18px 0;
+}
+.dot-run { width: 9px; height: 9px; border-radius: 50%; background: var(--pred); flex: none; }
+
+/* ---------- research questions ---------- */
+.rqs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-top: 20px; }
+.rq {
+  border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; background: var(--panel);
+}
+.rq-n { font-family: var(--serif); font-weight: 700; color: var(--accent); font-size: 15px;
+        letter-spacing: 0.5px; margin-bottom: 8px; }
+.rq-q { font-family: var(--serif); font-size: 19px; color: var(--ink); margin: 0 0 10px; line-height: 1.35; }
+.rq-a { font-size: 16px; color: var(--soft-ink); margin: 0; }
+
+/* ---------- method stages ---------- */
+.svgwrap {
+  margin: 22px 0 8px; padding: 22px; border: 1px solid var(--line);
+  border-radius: 14px; background: var(--panel); text-align: center;
+}
+.svgwrap svg { max-width: 100%; height: auto; }
+.fig-note { font-size: 14.5px; color: var(--muted); margin: 0 0 8px; }
+.stages { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-top: 22px; }
+.stage {
+  position: relative; border: 1px solid var(--line); border-radius: 14px;
+  padding: 20px 22px 20px 60px; background: #fff;
+}
+.snum {
+  position: absolute; left: 20px; top: 20px;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--accent); color: #fff; font-family: var(--serif); font-weight: 700;
+  display: flex; align-items: center; justify-content: center; font-size: 15px;
+}
+.stage h4 { font-family: var(--sans); font-size: 16.5px; }
+.stage p { font-size: 15.5px; color: var(--soft-ink); margin: 0; }
+
+/* ---------- measurements gallery ---------- */
+.wide-lede { font-size: 17px; color: var(--soft-ink); }
+.mgroup {
+  font-family: var(--sans); font-size: 14px; font-weight: 700; text-transform: none;
+  letter-spacing: 0.2px; color: var(--muted);
+  margin: 30px 0 14px; padding-bottom: 7px; border-bottom: 2px solid var(--line);
+}
+.mgrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.mcard {
+  border: 1px solid var(--line); border-radius: 14px; background: #fff;
+  padding: 18px 20px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+}
+.mcard-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.mcard-head h4 { font-family: var(--serif); font-size: 18px; line-height: 1.25; }
+.mcard-img { margin: 14px 0 12px; }
+.mcard-img img { width: 100%; height: auto; display: block; border-radius: 9px; border: 1px solid var(--line); }
+.mcard-img .ph { border-radius: 9px; min-height: 180px; }
+.m-real { font-size: 15px; color: var(--ink); font-style: italic; margin: 0 0 12px; }
+.m-line { font-size: 14.5px; color: var(--soft-ink); margin: 0 0 8px; max-width: none; }
+.lbl {
+  display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.4px;
+  text-transform: uppercase; padding: 2px 8px; border-radius: 999px; margin-right: 7px;
+  vertical-align: 1px;
+}
+.lbl.ok { background: #e6f5ec; color: #1a7f37; }
+.lbl.viol { background: #fdece2; color: #a8430a; }
+.pill {
+  display: inline-block; padding: 3px 10px; border-radius: 999px;
+  font-size: 11px; font-weight: 700; white-space: nowrap; flex: none;
+}
+.pill.rule { background: #e9f4ef; color: #006b4f; }
+.pill.conf { background: #eef3fa; color: #0072B2; }
+
+/* ---------- experiments ---------- */
+.exp {
+  border: 1px solid var(--line); border-radius: 16px; background: #fff;
+  padding: 28px 30px; margin: 22px 0;
+}
+.exp + .exp { margin-top: 26px; }
+.exp-tag {
+  font-family: var(--sans); font-size: 12px; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 8px;
+}
+.exp h3 { margin-bottom: 14px; }
+.exp-setup, .exp-res, .exp-mean { font-size: 16.5px; color: var(--soft-ink); }
+.exp-mean {
+  margin-top: 8px; padding: 16px 18px; background: var(--panel);
+  border-left: 4px solid var(--worldcache); border-radius: 0 10px 10px 0;
+}
+.plain-list { list-style: none; padding: 0; margin: 6px 0 16px; max-width: var(--col); }
+.plain-list li { font-size: 15.5px; color: var(--soft-ink); margin: 0 0 8px; padding-left: 2px; }
+.swatch { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 8px; vertical-align: 0; }
+
+/* ---------- static figures ---------- */
+.fig {
+  margin: 20px 0; border: 1px solid var(--line); border-radius: 14px;
+  background: var(--panel); padding: 18px; text-align: center;
+}
+.fig img { max-width: 100%; height: auto; display: block; margin: 0 auto; border-radius: 6px; }
+.fig figcaption { font-size: 14.5px; color: var(--soft-ink); text-align: left; margin-top: 14px; }
+.howto {
+  display: block; margin-top: 10px; padding: 12px 14px; background: #fff;
+  border: 1px solid var(--line); border-radius: 9px; font-size: 14px; color: var(--muted);
+}
+.howto b { color: var(--soft-ink); }
+
+/* ---------- takeaways / limits ---------- */
+.takeaways, .limits { padding-left: 22px; margin: 6px 0 8px; }
+.takeaways li { font-size: 17px; color: var(--soft-ink); margin-bottom: 12px; }
+.limits li { font-size: 15.5px; color: var(--muted); margin-bottom: 9px; }
+
+/* ---------- bibtex + footer ---------- */
+pre.bib {
+  background: #f7f7f5; border: 1px solid var(--line); border-radius: 12px;
+  padding: 18px 20px; overflow-x: auto; font-family: var(--mono);
+  font-size: 13px; line-height: 1.55; color: #2a2a2a; max-width: var(--col);
+}
+footer { text-align: center; padding: 40px 26px 66px; color: var(--muted); font-size: 14px; }
+
+/* ---------- responsive ---------- */
+@media (max-width: 860px) {
+  body { font-size: 17px; }
+  .hero h1 { font-size: 44px; }
+  .tagline { font-size: 20px; }
+  .rqs, .stages, .mgrid { grid-template-columns: 1fr; }
+  h2 { font-size: 25px; }
+  .wrap, .nav-in { padding-left: 18px; padding-right: 18px; }
+  .exp { padding: 22px 20px; }
+  .stage { padding-left: 58px; }
+}

@@ -1,0 +1,61 @@
+{
+  "measurements": [
+    {
+      "filename": "m_selfcollision.png",
+      "metric_name": "Self-collision penetration",
+      "unit": "mm",
+      "distribution_free": true,
+      "what_it_measures": "Maximum sphere\u2013sphere penetration between the arm capsules and the body-core / other arm, computed analytically on the FK'd pose.",
+      "violation_desc": "Folding the arms into the torso drives a real overlap; the offending sphere pair reads \u2248118 mm while a real teleop pose reads exactly 0 mm."
+    },
+    {
+      "filename": "m_com_balance.png",
+      "metric_name": "Centre-of-mass margin",
+      "unit": "mm",
+      "distribution_free": true,
+      "what_it_measures": "Signed distance from the whole-body CoM ground projection to the nearest edge of the foot support rectangle (>0 = inside / balanced).",
+      "violation_desc": "An extreme waist lean shrinks the margin from 118 to 74 mm; on GR-1's light arms it does not cross the edge, and we report that honestly."
+    },
+    {
+      "filename": "m_joint_limits.png",
+      "metric_name": "Joint-limit excess",
+      "unit": "rad",
+      "distribution_free": true,
+      "what_it_measures": "Per-DoF overshoot beyond the URDF [q_lo, q_hi] limits, summed over the 17 joints on the unsquashed readout.",
+      "violation_desc": "An extrapolated (impossible) pose pushes 4 joints past their limits, each excess drawn in red, while the real pose stays fully in-range."
+    },
+    {
+      "filename": "m_jerk.png",
+      "metric_name": "Temporal jerk",
+      "unit": "m/s\u00b3",
+      "distribution_free": true,
+      "what_it_measures": "Per-frame magnitude of the third time-derivative of the bimanual keypoints \u2014 the smoothness of motion over a clip.",
+      "violation_desc": "A generated (cache-accelerated) clip is markedly jerkier than the real clip it is paired against, raising mean jerk from 14.6 to 37.5 m/s\u00b3."
+    },
+    {
+      "filename": "m_sigma.png",
+      "metric_name": "Aleatoric uncertainty \u03c3",
+      "unit": "rad",
+      "distribution_free": false,
+      "what_it_measures": "Per-joint aleatoric standard deviation from the \u03b2-NLL heteroscedastic readout head \u2014 how sure the pose estimate is, per DoF.",
+      "violation_desc": "On an ambiguous / occluded frame \u03c3 grows on the hard joints (median arm \u03c3 0.065\u21920.091 rad), flagging a low-confidence reading rather than hard-failing it."
+    }
+  ],
+  "groups": [
+    {
+      "title": "Mechanical feasibility (per-frame, distribution-free)",
+      "files": [
+        "m_selfcollision.png",
+        "m_com_balance.png",
+        "m_joint_limits.png"
+      ]
+    },
+    {
+      "title": "Temporal & uncertainty",
+      "files": [
+        "m_jerk.png",
+        "m_sigma.png"
+      ]
+    }
+  ]
+}

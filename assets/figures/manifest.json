@@ -1,0 +1,46 @@
+{
+  "figures": [
+    {
+      "filename": "fig1_pipeline.svg",
+      "title": "The feasibility-ruler pipeline",
+      "caption": "Video frames pass through a frozen DINOv3-L encoder into Readout-v2, which predicts joint angles (mean in raw radians) together with a calibrated per-joint uncertainty sigma over a temporal window. Forward kinematics on the robot URDF turns those angles into 3-D poses, from which three signals are read out: physical feasibility, temporal smoothness (jerk), and a sigma confidence gate. Every metric is evaluated under a paired protocol, phi(pred) minus phi(gt) on the same episode, so effects are measured against the model's own ground-truth rollout.",
+      "source": "hand-authored"
+    },
+    {
+      "filename": "fig_noninv_page.png",
+      "title": "Non-inversion sanity check",
+      "caption": "AUROC of ranking a synthetic rollout above a real one for the rate-independent feasibility metrics. Penetration and self-collision sit exactly on the 0.50 null line: the ruler never scores a real rollout as less feasible than a generated one. Center-of-mass margin is a higher-is-better metric, so its value below 0.5 is the correct, non-inverted direction (real rollouts are more balanced than synthetic ones). The frame-rate-dependent jerk axis is excluded here because real and synthetic clips are captured at different fps.",
+      "source": "outputs_bench/stats/stats.json (non_inversion) via scripts/bench/50_figures.py (clean project-page path)"
+    },
+    {
+      "filename": "fig2_paired.png",
+      "title": "Paired jerk: phi(gt) vs phi(pred)",
+      "caption": "Top: per-episode scatter of ground-truth versus predicted jerk for each cache method against the y = x identity line. Bottom: the per-method distribution of Delta jerk (pred minus gt), with the uncached dense method's interquartile band drawn as the world-model reference. Points above the identity line quantify the systematic jerk that caching introduces on the same episodes.",
+      "source": "outputs_bench/figures/fig2_paired.png"
+    },
+    {
+      "filename": "fig_timeline.png",
+      "title": "Temporal jerk timeline",
+      "caption": "Per-frame jerk for one example episode, ground-truth versus predicted, with the shaded gap marking the frames where the generated rollout exceeds physically plausible smoothness. The headline temporal tax accumulates frame by frame rather than in isolated spikes.",
+      "source": "outputs_bench/figures/fig_timeline.png"
+    },
+    {
+      "filename": "readout_gates.png",
+      "title": "Readout-v2 gate report",
+      "caption": "Five acceptance gates for the Readout-v2 pose head, evaluated over roughly 4.9k clean and 4.5k degraded windows: clean-window accuracy (joint RMSE and forward-kinematics keypoint error), robustness under input degradation, noise floor, sigma calibration (coverage and NLL against a constant baseline), and collapse honesty (whether sigma tracks error). The report exposes which gates pass and which remain open.",
+      "source": "outputs_gr1/readout_v2/readout_v2_gates.png"
+    },
+    {
+      "filename": "feasibility_gate.png",
+      "title": "Feasibility manifold gate",
+      "caption": "Distribution of the feasibility metrics (self-collision fraction, penetration, center-of-mass margin, limit and balance violations) across real rollouts versus synthetically corrupted variants. The gate confirms the feasibility ruler separates infeasible poses from feasible ones without penalizing genuine real motion.",
+      "source": "outputs_gr1/feasibility_manifold/feasibility.png"
+    },
+    {
+      "filename": "fig4_ruler.png",
+      "title": "The ruler is finer than the tax",
+      "caption": "Per-metric comparison of the p95 measurement error, i.e. the ruler's own resolution, against the magnitude of the strongest cache's median effect (absolute median Delta). The effect exceeds the measurement noise floor by the annotated multiple on the discriminative axes, so the reported differences are real, measurable quantities rather than sampling artifacts.",
+      "source": "outputs_bench/figures/fig4_ruler.png"
+    }
+  ]
+}
