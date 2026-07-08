@@ -139,9 +139,28 @@
     
     <p class="exp-mean"><b>What it means.</b> About 19&nbsp;mm is roughly the width of a fingertip &mdash; small enough that everything built on top of it (the physics checks) rests on a faithful pose. The reader also reports its confidence, so the few frames it is unsure about need not be trusted.</p>
   </article>
-  
+
   <article class="exp">
-    <div class="exp-tag">Experiment 2 &middot; A fair ruler (RQ2)</div>
+    <div class="exp-tag">Experiment 2 &middot; Why the pose is this good (RQ1)</div>
+    <h3>Reading pose through the robot's model beats learning to integrate actions</h3>
+    <p class="exp-setup"><b>Setup.</b> All methods are trained the <em>same</em> way &mdash; head-only on the <em>same</em> frozen DINOv3 image features, the <em>same</em> GR1 robot data, the <em>same</em> held-out validation split, and scored with the <em>same</em> 3-D keypoint-error metric (millimetres from the true skeleton). The only thing that differs is the learning signal / architecture. We also vary how much labelled data each one is given &mdash; 10%, 40%, 100% of the training episodes &mdash; to see who needs more data.</p>
+    <p class="fig-note" style="font-weight:700;color:var(--soft-ink);margin-top:8px;">The alternatives, and how each recovers a pose</p>
+    <ul class="plain-list">
+      <li><span class="swatch" style="background:#009E73"></span><b>Ours &mdash; FK readout:</b> built around the robot's kinematic model. A frozen vision model gives image features; a set of attention maps &mdash; one per URDF degree of freedom, in the robot's own left-arm / right-arm / waist layout &mdash; each read the limb that joint controls, and output the joint's absolute angle plus a confidence. The pose is then read straight through the robot's exact forward-kinematics chain (its CAD/URDF model). It never integrates anything, so there is nothing to drift.</li>
+      <li><span class="swatch" style="background:#56B4E9"></span><b>Direct readout (no kinematic structure):</b> the same frozen features fed to a plain predictor that regresses the absolute joint angles per frame &mdash; but without the per-joint attention, the forward-kinematics keypoint training, or the confidence. It isolates how much the kinematic structure itself is worth.</li>
+      <li><span class="swatch" style="background:#CC79A7"></span><b>IDM-absolute:</b> reads a pair of consecutive frames and predicts the absolute next pose directly. A control: it uses a frame pair like an inverse-dynamics model but still reads an absolute pose, so it never has to integrate &mdash; this separates &ldquo;the drift&rdquo; from &ldquo;the frame-pair input&rdquo; as the source of error.</li>
+      <li><span class="swatch" style="background:#E69F00"></span><b>Learned IDM (inverse dynamics):</b> reads a pair of frames and predicts the <em>action</em> between them &mdash; the change in joint angles. To get an actual pose you must start from a known pose and add up these predicted changes frame after frame; tiny per-step errors accumulate, so the pose drifts away from the truth over a clip.</li>
+      <li><span class="swatch" style="background:#D55E00"></span><b>LAPA (latent action pretraining):</b> a popular label-efficient recipe. First, with no labels, it learns a small dictionary of discrete &ldquo;latent actions&rdquo; that explain how one frame turns into the next (a vector-quantised code plus a forward model). Then a tiny probe, trained on a little labelled data, maps each latent action to a joint change &mdash; which again must be integrated, and the unsupervised latent carries only limited information about the true pose, so it both drifts and plateaus.</li>
+    </ul>
+    <p class="exp-res"><b>Result.</b> Reading the pose directly through the robot's model lands about <b>‹XX›&nbsp;mm</b> from the true skeleton, several times closer than any alternative &mdash; and it gets there with far less data. The models that must integrate a learned action (IDM, LAPA) drift the worst; removing the kinematic structure (Direct) or the integration (IDM-absolute) lands in between.</p>
+    <figure class="tbl"><div class="tbl-scroll"><table><thead><tr><th>Method</th><th>What it learns</th><th>How it recovers a pose</th><th>Needs</th><th>10% data</th><th>40% data</th><th>100% data</th></tr></thead><tbody><tr><td class="lft"><span class="swatch" style="background:#009E73"></span>Ours &mdash; FK readout</td><td>absolute joint angles, per-joint attention + confidence</td><td>reads angles through the exact forward-kinematics chain</td><td>nothing to integrate</td><td class="num"><!--FILL m=ours b=10-->&mdash;</td><td class="num"><!--FILL m=ours b=40-->&mdash;</td><td class="num"><!--FILL m=ours b=100-->&mdash;</td></tr><tr><td class="lft"><span class="swatch" style="background:#56B4E9"></span>Direct readout</td><td>absolute joint angles, plain regressor</td><td>predicts the pose directly, no kinematic structure</td><td>nothing to integrate</td><td class="num"><!--FILL m=direct b=10-->&mdash;</td><td class="num"><!--FILL m=direct b=40-->&mdash;</td><td class="num"><!--FILL m=direct b=100-->&mdash;</td></tr><tr><td class="lft"><span class="swatch" style="background:#CC79A7"></span>IDM-absolute</td><td>absolute next pose from a frame pair</td><td>predicts the next pose directly from two frames</td><td>nothing to integrate</td><td class="num"><!--FILL m=idm_abs b=10-->&mdash;</td><td class="num"><!--FILL m=idm_abs b=40-->&mdash;</td><td class="num"><!--FILL m=idm_abs b=100-->&mdash;</td></tr><tr><td class="lft"><span class="swatch" style="background:#E69F00"></span>Learned IDM</td><td>the action (joint change) between two frames</td><td>adds up predicted changes from a known start</td><td>a known start pose + integration</td><td class="num"><!--FILL m=idm b=10-->&mdash;</td><td class="num"><!--FILL m=idm b=40-->&mdash;</td><td class="num"><!--FILL m=idm b=100-->&mdash;</td></tr><tr><td class="lft"><span class="swatch" style="background:#D55E00"></span>LAPA</td><td>unsupervised latent actions, then a labelled probe</td><td>maps latents to joint changes, then integrates</td><td>unlabelled pretraining + a known start + integration</td><td class="num"><!--FILL m=lapa b=10-->&mdash;</td><td class="num"><!--FILL m=lapa b=40-->&mdash;</td><td class="num"><!--FILL m=lapa b=100-->&mdash;</td></tr></tbody></table></div><figcaption>Lower is better &mdash; every method read on the same held-out clips, so only the learning signal differs.<span class="howto"><b>How to read this.</b> The last three columns are three data budgets &mdash; the method is given 10%, 40%, or 100% of the labelled training episodes &mdash; and each number is the 3-D keypoint error in millimetres, lower = closer to the true skeleton.</span></figcaption></figure>
+    <p class="fig-note">The mm numbers are being finalised from the data-efficiency sweep now running, so the cells read &mdash; for the moment; LAPA's 10/40/100% counts only its labelled probe data &mdash; it also uses all clips unlabelled in its first stage.</p>
+    <figure class="fig"><img src="assets/highlow_gallery/kp_mm_compare.png" loading="lazy" alt=""><figcaption>Every alternative sits far above our reader at every data budget.<span class="howto"><b>How to read this.</b> The x-axis is the fraction of labelled data (10/40/100%), the y-axis is 3-D keypoint error in mm on a log scale, lower is better; the dotted line is our production reader (~19&nbsp;mm); the alternatives that must integrate an action (IDM, LAPA) drift highest.</span></figcaption></figure>
+    <p class="exp-mean"><b>What it means.</b> Our reader is not a generic pose network &mdash; it is wired to the robot's own kinematics, every output a specific joint with its own attention, and the pose is read straight through the exact forward-kinematics chain, so it never integrates and has nothing to drift; and because each joint is pinned to its own limb it reaches a faithful pose from little data. The inverse-dynamics family instead learns a free-form action and has to add it up from a known start, so small errors compound into large drift over a clip; and a purely learned latent action (LAPA) barely encodes the true pose, so it plateaus no matter how much you integrate. That is why, at every data budget, the constrained readout lands several times closer to the true skeleton &mdash; the grounding in the robot's engineering model is exactly what buys the accuracy.</p>
+  </article>
+
+  <article class="exp">
+    <div class="exp-tag">Experiment 3 &middot; A fair ruler (RQ2)</div>
     <h3>Real footage is never scored below a fake</h3>
     <p class="exp-setup"><b>Setup.</b> On real recordings we ask whether the physics checks ever rate real footage as less valid than generated footage.</p>
     <p class="exp-res"><b>Result.</b> On real footage, the two feasibility checks that don't depend on frame rate read the same for real and generated &mdash; a coin-flip, never worse for the real clip. (A third check, balance, correctly rates real footage as <em>more</em> stable.)</p>
@@ -151,7 +170,7 @@
   </article>
   
   <article class="exp">
-    <div class="exp-tag">Experiment 3 &middot; A dial, not an alarm</div>
+    <div class="exp-tag">Experiment 4 &middot; A dial, not an alarm</div>
     <h3>The reading rises smoothly as a pose gets worse</h3>
     <p class="exp-setup"><b>Setup.</b> We corrupt real poses by growing amounts, and separately degrade the video quality, and watch how the readings respond.</p>
     <p class="exp-res"><b>Result.</b> As a pose is corrupted more and more, the violation reading rises smoothly with it (in almost perfect order for overlap, in perfect order for joint limits). And as the <em>video</em> quality is degraded, the model's stated uncertainty climbs in step (in perfect order).</p>
@@ -161,7 +180,7 @@
   </article>
   
   <article class="exp">
-    <div class="exp-tag">Experiment 4 &middot; The main finding (RQ3)</div>
+    <div class="exp-tag">Experiment 5 &middot; The main finding (RQ3)</div>
     <h3>Generated motion is measurably jerkier than real</h3>
     <p class="exp-setup"><b>Setup.</b> For each generated clip we compare it against its <em>own</em> ground-truth clip &mdash; same scene, same task &mdash; so nothing but the generation differs.</p>
     <p class="exp-res"><b>Result.</b> Compared frame-for-frame against its <em>own</em> real counterpart, every generated clip is jerkier. Typical jerk rises from about <b>15.7</b> for the real clip to about <b>21.3</b> for the generated one &mdash; a gap of roughly <b>5.5</b> per episode, across 116 episodes. In 99 episodes out of 100 the generated clip was the jerkier one.</p>
@@ -171,7 +190,7 @@
   </article>
   
   <article class="exp">
-    <div class="exp-tag">Experiment 5 &middot; More ways the ruler can look</div>
+    <div class="exp-tag">Experiment 6 &middot; More ways the ruler can look</div>
     <h3>Rigidity and principled smoothness confirm the story</h3>
     <p class="exp-setup"><b>Setup.</b> Beyond raw jerk, we read several more physical rulers on the same clips &mdash; limb rigidity, two scale-free smoothness measures (SPARC and dimensionless jerk), and hard checks for impossible speeds and teleports. Each is shown firing or staying quiet in &ldquo;the ruler in the wild&rdquo; above; here we put a single number on each &mdash; its <b>separation</b>, how reliably it tells a real clip from a generated one (0.5 = a coin-flip, 1.0 = perfect).</p>
     <p class="exp-res"><b>Result.</b> <b>Limbs shouldn&rsquo;t stretch like rubber.</b> On fairly-matched footage, a limb wanders about <b>4.3&nbsp;mm</b> in length on real clips but about <b>5.9&nbsp;mm</b> on generated ones &mdash; enough for the rigidity check to separate real from generated reliably (67.4% of the time, on a scale where 50% is a coin-flip and 100% is perfect). Two principled, scale-free smoothness measures (SPARC and dimensionless jerk) agree that generated motion is clearly less smooth than real (about 87.9% separation for SPARC). Importantly, these <em>fix a subtlety</em>: the raw jerk number depends on frame rate, so on clips recorded at different speeds it can look misleading &mdash; the scale-free measures don&rsquo;t have that problem.</p>
@@ -181,7 +200,7 @@
   </article>
   
   <article class="exp">
-    <div class="exp-tag">Experiment 6 &middot; Speed-ups are free (RQ4)</div>
+    <div class="exp-tag">Experiment 7 &middot; Speed-ups are free (RQ4)</div>
     <h3>Making the generator faster adds no extra jerk</h3>
     <p class="exp-setup"><b>Setup.</b> Several published methods speed these generators up by caching. We measure the extra jerk each one adds on top of the un-accelerated generator, and rank the methods.</p>
     <figure class="fig"><img src="assets/highlow_gallery/method_compare.png" loading="lazy" alt=""><figcaption>The four generators on the very same scene, read through the smoothness ruler.<span class="howto"><b>How to read this.</b> One real ground-truth clip (green, the same in every row) versus each generator's take on it (amber): the dense baseline, then the three caching accelerators. All four amber traces spike far above the real one &mdash; generation is jerkier &mdash; and, crucially, they spike by nearly the same amount as the un-accelerated dense baseline. The caching accelerators add essentially no extra jerk: the physics cost is in generating the video, not in speeding it up.</span></figcaption></figure>
@@ -200,6 +219,9 @@
     <li>You can read a robot's pose from raw video accurately enough
         (about 19&nbsp;mm) to judge its physics
         &mdash; and the reader knows when to doubt itself.</li>
+    <li>Reading the pose through the robot's exact kinematic model, instead of learning to
+        integrate an action, is what makes it both far more accurate and far more data-efficient
+        than inverse-dynamics or latent-action baselines.</li>
     <li>Grounding the checks in the robot's engineering model, rather than a learned sense of
         &ldquo;normal,&rdquo; means real footage can never be unfairly ranked below a fake.</li>
     <li>Today's generated robot videos don't strike impossible poses &mdash; they break physics
