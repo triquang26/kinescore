@@ -1,7 +1,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>KineScore — a physics ruler for generated robot video</title>
+<title>KineScore — reading a robot's true motion from video</title>
 <link rel="stylesheet" href="assets/css/style.css">
 
 <nav class="nav"><div class="nav-in">
@@ -9,7 +9,7 @@
   <a href="#problem">Problem</a>
   <a href="#questions">Questions</a>
   <a href="#method">How it works</a>
-  <a href="#measurements">Measurements</a>
+  <a href="#measurements">What it checks</a>
   <a href="#experiments">Experiments</a>
   <a href="#findings">Findings</a>
   <a href="#cite">Cite</a>
@@ -19,14 +19,18 @@
 
 <header class="hero">
   <h1>KineScore</h1>
-  <p class="tagline">A physics ruler for generated robot video.</p>
+  <p class="tagline">Reading a robot's true motion from video &mdash; grounded in its own mechanics, so it never drifts.</p>
   <p class="lede">
-    KineScore looks at a video of a robot and judges whether its <b>motion obeys
-    physics</b> &mdash; not whether the footage looks realistic. It reads the
-    robot's joint angles out of each frame, snaps them onto the real robot's 3-D
-    skeleton, and checks physical rules that no camera trick can fake. Because it
-    never learned &ldquo;what a real robot video looks like,&rdquo; it can never be
-    fooled into calling genuine footage the fake.
+    KineScore reads a robot's <b>true 3-D motion</b> straight out of ordinary video:
+    the exact bend of every joint, snapped onto the robot's real mechanical skeleton.
+    The popular way to do this is to guess the <em>movement</em> between frames and add
+    the movements up &mdash; but small mistakes pile up and the pose slowly drifts. We
+    instead read the pose <b>directly</b>, guided by the robot's own engineering model,
+    so there is nothing to add up and nothing to drift. It lands closer to the truth
+    than the popular action-guessing methods (<b>IDM</b> and <b>LAPA</b>), and needs
+    far less training data. And because the reading is honest and grounded in real
+    hardware, it doubles as a <b>physics check for AI-generated robot video</b> that
+    can never be fooled into calling genuine footage the fake.
   </p>
   <p class="anon">Anonymous submission &middot; under double-blind review &middot;
      author names withheld.</p>
@@ -42,19 +46,23 @@
 
 <section id="problem">
   <p class="kicker">The problem</p>
-  <h2>A video can look perfect and still be physically impossible</h2>
-  <p>Researchers increasingly train and test robots inside AI-generated video &mdash;
-  &ldquo;world models&rdquo; that dream up what a robot would see. It is fast and
-  cheap. But a generated clip can look razor-sharp while showing motion no real
-  machine could ever produce: arms that judder, joints that snap, limbs that
-  quietly stretch.</p>
-  <p>The usual video scores don't catch this. They measure <b>how realistic a clip
-  looks</b>, not <b>whether its physics is right</b>. Worse, any score that first
-  learns what &ldquo;normal&rdquo; footage looks like can be talked into rating a
-  piece of <b>genuine real footage as worse than a fake</b> &mdash; simply because
-  the real clip is unusual. That is exactly the trap we avoid: our checks come from
-  the robot's engineering model, so real footage can never be ranked below
-  something generated.</p>
+  <h2>To use video of a robot, you first have to recover what it physically did</h2>
+  <p>More and more, robots are trained and tested from video &mdash; learning a skill
+  by watching, or being graded inside an AI-generated &ldquo;world model&rdquo; that
+  dreams up what the robot would see. All of it rests on one hidden step: turning the
+  pixels back into <b>what the robot's body actually did</b> &mdash; the exact pose of
+  every joint, in every frame. Get that wrong and everything built on top is wrong
+  too.</p>
+  <p>The common recipe is to learn the <em>movement</em> between two frames &mdash; an
+  &ldquo;action&rdquo; &mdash; and then add those movements up to rebuild the pose. It
+  is like pacing out a dark room blindfolded: each step is a little off, and the
+  errors pile into a growing <b>drift</b>. Newer methods (LAPA) learn those movements
+  with no labels at all, which is cheaper but blurs the pose even more. We take the
+  opposite route &mdash; read the pose <b>directly</b> and snap it onto the robot's
+  real skeleton, so there is nothing to add up and nothing to drift. That faithful
+  pose is what lets us, further down, judge a generated clip's physics with checks
+  that come from the robot's engineering model &mdash; so real footage can never be
+  ranked below a fake.</p>
   <figure class="media wide"><video src="assets/videos/d2_dreamdojo_1.mp4" controls muted loop playsinline preload="metadata"></video><figcaption>An AI-generated clip (right) next to the real clip it is meant to imitate (left). The picture looks sharp — but the trace underneath, which measures how smoothly the arms move, stutters for the generated clip where the real one flows.</figcaption></figure>
 </section>
 
@@ -63,10 +71,10 @@
   <p class="kicker">What we ask</p>
   <h2>Four questions, in plain words</h2>
   <div class="rqs">
-    <div class="rq"><div class="rq-n">RQ1</div><p class="rq-q">Can we read a robot's joint angles from raw video reliably enough to judge its physics?</p><p class="rq-a">Yes. The 3-D skeleton read from raw pixels lands about <b>19&nbsp;mm</b> from the true one &mdash; a couple of centimetres &mdash; and the reader also says how sure it is on every frame.</p></div>
-    <div class="rq"><div class="rq-n">RQ2</div><p class="rq-q">Can we score physical plausibility <em>without</em> learning a distribution, so real footage is never unfairly penalised?</p><p class="rq-a">Yes. The physical checks come from the robot's own engineering model, not from a library of &ldquo;normal-looking&rdquo; videos. By construction, real footage can never be scored below a generated clip.</p></div>
-    <div class="rq"><div class="rq-n">RQ3</div><p class="rq-q">How, exactly, do today's generated robot videos break physics?</p><p class="rq-a">Not with impossible poses &mdash; today's generators keep joints legal. They break physics <b>in time</b>: the motion judders (about <b>27%</b> jerkier than real) and limbs subtly change length (about <b>37%</b> more distortion).</p></div>
-    <div class="rq"><div class="rq-n">RQ4</div><p class="rq-q">Do the speed-up methods that accelerate these generators make the physics worse?</p><p class="rq-a">No. The speed-up tricks that make these generators faster add essentially no extra jerk &mdash; a few are even slightly smoother. The physics cost is baked into the generation itself, not the acceleration.</p></div>
+    <div class="rq"><div class="rq-n">RQ1</div><p class="rq-q">Can we read a robot's real pose from ordinary video &mdash; accurately enough to trust it?</p><p class="rq-a">Yes. The 3-D skeleton read from raw pixels lands about <b>19&nbsp;mm</b> from the true one &mdash; roughly a fingertip &mdash; and the reader also says how sure it is on every frame.</p></div>
+    <div class="rq"><div class="rq-n">RQ2</div><p class="rq-q">Is reading the pose <em>directly</em> better than the popular &ldquo;guess-the-action&rdquo; methods (IDM, LAPA)?</p><p class="rq-a">Yes &mdash; by a wide margin. Because our reader is tied to the robot's own mechanics, it lands <b>several times closer</b> to the true skeleton than IDM or LAPA, and it gets there with <b>far less training data</b>.</p></div>
+    <div class="rq"><div class="rq-n">RQ3</div><p class="rq-q">Does a pose this faithful let us judge generated video's physics without ever being fooled?</p><p class="rq-a">Yes. The physical checks come from the robot's own engineering model, not from a library of &ldquo;normal-looking&rdquo; videos. By construction, real footage can never be scored below a generated clip.</p></div>
+    <div class="rq"><div class="rq-n">RQ4</div><p class="rq-q">How, exactly, do today's generated robot videos break physics?</p><p class="rq-a">Not with impossible poses &mdash; today's generators keep joints legal. They break physics <b>in time</b>: the motion judders (about <b>27%</b> jerkier than real) and limbs subtly change length (about <b>37%</b> more distortion).</p></div>
   </div>
 </section>
 
@@ -103,9 +111,10 @@
 
 
 <section id="measurements">
-  <p class="kicker">The measurements</p>
+  <p class="kicker">What a faithful pose unlocks</p>
   <h2>What the ruler actually checks</h2>
-  <p class="wide-lede">A measurement is only trustworthy if you can see what it looks at.
+  <p class="wide-lede">Once the pose is read faithfully, it doubles as a physics ruler for video.
+  A measurement is only trustworthy if you can see what it looks at.
   So for every check we put a <b>clean, physically fine pose</b> beside a <b>deliberate
   violation</b>, and show exactly what the number reads in each case. The first four are
   pure <b>physics rules</b> &mdash; geometry on the robot's own model, with nothing learned
@@ -128,10 +137,15 @@
 
 <section id="experiments">
   <p class="kicker">Experiments</p>
-  <h2>What we found</h2>
-  
+  <h2>The method, and why it wins</h2>
+  <p class="wide-lede">First we check the reader is faithful &mdash; the pose it recovers really
+  tracks the real robot. Then the heart of it: read the pose <b>directly</b>, the way the robot is
+  built, and it beats the popular &ldquo;guess-the-action&rdquo; methods (<b>IDM</b> and <b>LAPA</b>)
+  by a wide margin, on far less data. Everything after that is what a faithful pose <em>unlocks</em>
+  &mdash; an honest physics check for AI-generated video.</p>
+
   <article class="exp">
-    <div class="exp-tag">Experiment 1 &middot; Reading pose (RQ1)</div>
+    <div class="exp-tag">Experiment 1 &middot; Reading the pose (RQ1)</div>
     <h3>The reconstructed skeleton tracks the real robot</h3>
     <p class="exp-setup"><b>Setup.</b> We compare the 3-D skeleton read from raw video against the robot's true skeleton on held-out real recordings.</p>
     <p class="exp-res"><b>Result.</b> The skeleton reconstructed from pixels lands about <b>19&nbsp;mm</b> from the true 3-D skeleton on held-out real clips.</p>
@@ -141,7 +155,7 @@
   </article>
 
   <article class="exp">
-    <div class="exp-tag">Experiment 2 &middot; Why the pose is this good (RQ1)</div>
+    <div class="exp-tag">Experiment 2 &middot; The core result &mdash; our reader vs. IDM &amp; LAPA (RQ2)</div>
     <h3>Reading pose through the robot's model beats learning to integrate actions</h3>
     <p class="exp-setup"><b>Setup.</b> All methods are trained the <em>same</em> way &mdash; head-only on the <em>same</em> frozen DINOv3 image features, the <em>same</em> GR1 robot data, the <em>same</em> held-out validation split, and scored with the <em>same</em> 3-D keypoint-error metric (millimetres from the true skeleton). The only thing that differs is the learning signal / architecture. We also vary how much labelled data each one is given &mdash; 10%, 40%, 100% of the training episodes &mdash; to see who needs more data.</p>
     <p class="fig-note" style="font-weight:700;color:var(--soft-ink);margin-top:8px;">The alternatives, and how each recovers a pose</p>
@@ -160,7 +174,7 @@
   </article>
 
   <article class="exp">
-    <div class="exp-tag">Experiment 3 &middot; A fair ruler (RQ2)</div>
+    <div class="exp-tag">Experiment 3 &middot; A fair ruler (RQ3)</div>
     <h3>Real footage is never scored below a fake</h3>
     <p class="exp-setup"><b>Setup.</b> On real recordings we ask whether the physics checks ever rate real footage as less valid than generated footage.</p>
     <p class="exp-res"><b>Result.</b> On real footage, the two feasibility checks that don't depend on frame rate read the same for real and generated &mdash; a coin-flip, never worse for the real clip. (A third check, balance, correctly rates real footage as <em>more</em> stable.)</p>
@@ -180,7 +194,7 @@
   </article>
   
   <article class="exp">
-    <div class="exp-tag">Experiment 5 &middot; The main finding (RQ3)</div>
+    <div class="exp-tag">Experiment 5 &middot; The main finding (RQ4)</div>
     <h3>Generated motion is measurably jerkier than real</h3>
     <p class="exp-setup"><b>Setup.</b> For each generated clip we compare it against its <em>own</em> ground-truth clip &mdash; same scene, same task &mdash; so nothing but the generation differs.</p>
     <p class="exp-res"><b>Result.</b> Compared frame-for-frame against its <em>own</em> real counterpart, every generated clip is jerkier. Typical jerk rises from about <b>15.7</b> for the real clip to about <b>21.3</b> for the generated one &mdash; a gap of roughly <b>5.5</b> per episode, across 116 episodes. In 99 episodes out of 100 the generated clip was the jerkier one.</p>
@@ -200,7 +214,7 @@
   </article>
   
   <article class="exp">
-    <div class="exp-tag">Experiment 7 &middot; Speed-ups are free (RQ4)</div>
+    <div class="exp-tag">Experiment 7 &middot; Speed-ups are free</div>
     <h3>Making the generator faster adds no extra jerk</h3>
     <p class="exp-setup"><b>Setup.</b> Several published methods speed these generators up by caching. We measure the extra jerk each one adds on top of the un-accelerated generator, and rank the methods.</p>
     <figure class="fig"><img src="assets/highlow_gallery/method_compare.png" loading="lazy" alt=""><figcaption>The four generators on the very same scene, read through the smoothness ruler.<span class="howto"><b>How to read this.</b> One real ground-truth clip (green, the same in every row) versus each generator's take on it (amber): the dense baseline, then the three caching accelerators. All four amber traces spike far above the real one &mdash; generation is jerkier &mdash; and, crucially, they spike by nearly the same amount as the un-accelerated dense baseline. The caching accelerators add essentially no extra jerk: the physics cost is in generating the video, not in speeding it up.</span></figcaption></figure>
@@ -216,12 +230,11 @@
   <p class="kicker">What we conclude</p>
   <h2>Takeaways</h2>
   <ul class="takeaways">
-    <li>You can read a robot's pose from raw video accurately enough
-        (about 19&nbsp;mm) to judge its physics
-        &mdash; and the reader knows when to doubt itself.</li>
-    <li>Reading the pose through the robot's exact kinematic model, instead of learning to
-        integrate an action, is what makes it both far more accurate and far more data-efficient
-        than inverse-dynamics or latent-action baselines.</li>
+    <li>Reading the pose <b>directly</b> through the robot's exact kinematic model, instead of
+        learning an action and adding it up, is what makes it both far more accurate and far more
+        data-efficient than the popular inverse-dynamics (IDM) and latent-action (LAPA) baselines.</li>
+    <li>That direct read is accurate enough to trust &mdash; about <b>19&nbsp;mm</b> from the true
+        3-D skeleton &mdash; and the reader also knows when to doubt itself.</li>
     <li>Grounding the checks in the robot's engineering model, rather than a learned sense of
         &ldquo;normal,&rdquo; means real footage can never be unfairly ranked below a fake.</li>
     <li>Today's generated robot videos don't strike impossible poses &mdash; they break physics
